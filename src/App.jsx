@@ -1,0 +1,1718 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "./supabaseClient";
+import "./App.css";
+
+const CLUB_NAME = "Moselle Darts 57";
+
+function App() {
+  const [matches, setMatches] = useState([]);
+
+  const [settings, setSettings] = useState({
+    tournoi: "",
+    lieu: "",
+  });
+
+  const [activeTab, setActiveTab] = useState("live");
+
+  const [tournoi, setTournoi] = useState("");
+  const [lieu, setLieu] = useState("");
+
+  const [joueur, setJoueur] = useState("");
+  const [adversaire, setAdversaire] = useState("");
+
+  const [clubJoueur, setClubJoueur] = useState(CLUB_NAME);
+  const [clubAdversaire, setClubAdversaire] = useState("");
+
+  const [cible, setCible] = useState("");
+  const [manchesGagnantes, setManchesGagnantes] = useState(3);
+
+  const [editingId, setEditingId] = useState(null);
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  // ==================================================
+  // CHARGEMENT DES MATCHS
+  // ==================================================
+
+  const loadMatches = async () => {
+    const { data, error } = await supabase
+      .from("live_matches")
+      .select("*")
+      .or(
+        `club_joueur.eq.${CLUB_NAME},club_adversaire.eq.${CLUB_NAME}`
+      )
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error("Erreur chargement matchs :", error);
+      return;
+    }
+
+    setMatches(data || []);
+  };
+
+  // ==================================================
+  // CHARGEMENT DES PARAMÈTRES
+  // ==================================================
+
+  const loadSettings = async () => {
+    const { data, error } = await supabase
+      .from("live_settings")
+      .select("*")
+      .eq("id", 1)
+      .single();
+
+    if (error) {
+      console.error("Erreur chargement paramètres :", error);
+      return;
+    }
+
+    if (data) {
+      setSettings({
+        tournoi: data.tournoi || "",
+        lieu: data.lieu || "",
+      });
+
+      setTournoi(data.tournoi || "");
+      setLieu(data.lieu || "");
+    }
+  };
+
+  // ==================================================
+  // INITIALISATION
+  // ==================================================
+
+  useEffect(() => {
+    loadSettings();
+    loadMatches();
+
+    const interval = setInterval(() => {
+      loadMatches();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ==================================================
+  // MATCHS EN DIRECT
+  // ==================================================
+
+  const liveMatches = useMemo(() => {
+    return matches
+      .filter((match) => match.statut === "En cours")
+      .sort(
+        (a, b) =>
+          Number(a.cible_numero || 999) -
+          Number(b.cible_numero || 999)
+      );
+  }, [matches]);
+
+  // ==================================================
+  // MATCHS TERMINÉS
+  // ==================================================
+
+  const completedMatches = useMemo(() => {
+    return matches
+      .filter((match) => match.statut === "Terminé")
+      .sort(
+        (a, b) =>
+          Number(b.id || 0) -
+          Number(a.id || 0)
+      );
+  }, [matches]);
+
+  const latestMatches = completedMatches.slice(0, 10);
+
+  // ==================================================
+  // PARAMÈTRES DU TOURNOI
+  // ==================================================
+
+  const saveSettings = async () => {
+    setMessage("");
+
+    const tournoiFinal =
+      tournoi.trim() || settings.tournoi.trim();
+
+    const lieuFinal =
+      lieu.trim() || settings.lieu.trim();
+
+    if (!tournoiFinal) {
+      setMessage("⚠️ Le nom du tournoi est obligatoire.");
+      return;
+    }
+
+    if (!lieuFinal) {
+      setMessage("⚠️ Le lieu est obligatoire.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("live_settings")
+      .update({
+        tournoi: tournoiFinal,
+        lieu: lieuFinal,
+      })
+      .eq("id", 1);
+
+    if (error) {
+      console.error("Erreur paramètres :", error);
+
+      setMessage(
+        `❌ Erreur : ${error.message}`
+      );
+
+      return;
+    }
+
+    setSettings({
+      tournoi: tournoiFinal,
+      lieu: lieuFinal,
+    });
+
+    setTournoi(tournoiFinal);
+    setLieu(lieuFinal);
+
+    setMessage("✅ Paramètres enregistrés.");
+  };
+
+  // ==================================================
+  // CRÉATION D'UN MATCH
+  // ==================================================
+
+  const createMatch = async (event) => {
+    event.preventDefault();
+
+    setMessage("");
+
+    if (!joueur.trim()) {
+      setMessage("⚠️ Le nom du joueur est obligatoire.");
+      return;
+    }
+
+    if (!adversaire.trim()) {
+      setMessage("⚠️ Le nom de l'adversaire est obligatoire.");
+      return;
+    }
+
+    if (!cible) {
+      setMessage("⚠️ Merci de choisir une cible.");
+      return;
+    }
+
+    const targetNumber = Number(cible);
+    const winningLegs = Number(manchesGagnantes);
+
+    // --------------------------------------------------
+    // TOURNOI
+    // --------------------------------------------------
+
+    const tournoiFinal =
+      tournoi.trim() ||
+      settings.tournoi.trim();
+
+    if (!tournoiFinal) {
+      setMessage(
+        "⚠️ Le nom du tournoi est obligatoire."
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    // --------------------------------------------------
+    // VÉRIFICATION DE LA CIBLE
+    // --------------------------------------------------
+
+    const { data: existingTarget, error: targetError } =
+      await supabase
+        .from("live_matches")
+        .select("id")
+        .eq("cible_numero", targetNumber)
+        .eq("statut", "En cours")
+        .maybeSingle();
+
+    if (targetError) {
+      console.error(
+        "Erreur vérification cible :",
+        targetError
+      );
+
+      setMessage(
+        `❌ Erreur vérification cible : ${targetError.message}`
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    if (existingTarget) {
+      setMessage(
+        `⚠️ La cible ${targetNumber} est déjà utilisée par un match en cours.`
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    // --------------------------------------------------
+    // NOUVEAU MATCH
+    // --------------------------------------------------
+
+    const nouveauMatch = {
+      tournoi: tournoiFinal,
+
+      joueur: joueur.trim(),
+      adversaire: adversaire.trim(),
+
+      table_numero: targetNumber,
+      cible_numero: targetNumber,
+
+      score_joueur: 0,
+      score_adversaire: 0,
+
+      statut: "En cours",
+
+      resultat: null,
+
+      club_joueur:
+        clubJoueur.trim() || CLUB_NAME,
+
+      club_adversaire:
+        clubAdversaire.trim() || "Autre club",
+
+      manches_gagnantes: winningLegs,
+    };
+
+    console.log(
+      "Nouveau match :",
+      nouveauMatch
+    );
+
+    const { error } = await supabase
+      .from("live_matches")
+      .insert([nouveauMatch]);
+
+    if (error) {
+      console.error(
+        "Erreur création match :",
+        error
+      );
+
+      setMessage(
+        `❌ Impossible de créer le match : ${error.message}`
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    // --------------------------------------------------
+    // RÉINITIALISATION
+    // --------------------------------------------------
+
+    setMessage(
+      `✅ Match créé sur la cible ${targetNumber} !`
+    );
+
+    setJoueur("");
+    setAdversaire("");
+
+    setClubJoueur(CLUB_NAME);
+    setClubAdversaire("");
+
+    setCible("");
+    setManchesGagnantes(3);
+
+    await loadMatches();
+
+    setActiveTab("live");
+
+    setLoading(false);
+  };
+
+  // ==================================================
+  // MODIFICATION D'UN MATCH
+  // ==================================================
+
+  const startEdit = (match) => {
+    setEditingId(match.id);
+
+    setJoueur(match.joueur || "");
+    setAdversaire(match.adversaire || "");
+
+    setClubJoueur(
+      match.club_joueur || CLUB_NAME
+    );
+
+    setClubAdversaire(
+      match.club_adversaire || ""
+    );
+
+    setCible(
+      match.cible_numero ||
+      match.table_numero ||
+      ""
+    );
+
+    setManchesGagnantes(
+      Number(match.manches_gagnantes || 3)
+    );
+  };
+
+  // ==================================================
+  // ANNULER MODIFICATION
+  // ==================================================
+
+  const cancelEdit = () => {
+    setEditingId(null);
+
+    setJoueur("");
+    setAdversaire("");
+
+    setClubJoueur(CLUB_NAME);
+    setClubAdversaire("");
+
+    setCible("");
+    setManchesGagnantes(3);
+  };
+
+  // ==================================================
+  // ENREGISTRER MODIFICATION
+  // ==================================================
+
+  const updateMatch = async (event) => {
+    event.preventDefault();
+
+    if (!editingId) return;
+
+    if (!joueur.trim() || !adversaire.trim()) {
+      setMessage(
+        "⚠️ Les deux joueurs sont obligatoires."
+      );
+
+      return;
+    }
+
+    if (!cible) {
+      setMessage(
+        "⚠️ Merci de choisir une cible."
+      );
+
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    const targetNumber = Number(cible);
+
+    const { error } = await supabase
+      .from("live_matches")
+      .update({
+        joueur: joueur.trim(),
+        adversaire: adversaire.trim(),
+
+        club_joueur:
+          clubJoueur.trim() || CLUB_NAME,
+
+        club_adversaire:
+          clubAdversaire.trim() ||
+          "Autre club",
+
+        table_numero: targetNumber,
+        cible_numero: targetNumber,
+
+        manches_gagnantes:
+          Number(manchesGagnantes),
+      })
+      .eq("id", editingId);
+
+    if (error) {
+      console.error(
+        "Erreur modification :",
+        error
+      );
+
+      setMessage(
+        `❌ Erreur modification : ${error.message}`
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    setMessage(
+      "✅ Match modifié avec succès."
+    );
+
+    cancelEdit();
+
+    await loadMatches();
+
+    setLoading(false);
+  };
+
+  // ==================================================
+  // MODIFICATION DU SCORE
+  // ==================================================
+
+  const updateScore = async (
+    match,
+    player,
+    amount
+  ) => {
+    if (match.statut !== "En cours") {
+      return;
+    }
+
+    let newScoreJoueur = Number(
+      match.score_joueur || 0
+    );
+
+    let newScoreAdversaire = Number(
+      match.score_adversaire || 0
+    );
+
+    // --------------------------------------------------
+    // SCORE JOUEUR
+    // --------------------------------------------------
+
+    if (player === "joueur") {
+      newScoreJoueur = Math.max(
+        0,
+        newScoreJoueur + amount
+      );
+    }
+
+    // --------------------------------------------------
+    // SCORE ADVERSAIRE
+    // --------------------------------------------------
+
+    if (player === "adversaire") {
+      newScoreAdversaire = Math.max(
+        0,
+        newScoreAdversaire + amount
+      );
+    }
+
+    const maxLegs = Number(
+      match.manches_gagnantes || 3
+    );
+
+    let statut = "En cours";
+    let resultat = null;
+
+    // --------------------------------------------------
+    // VICTOIRE JOUEUR
+    // --------------------------------------------------
+
+    if (newScoreJoueur >= maxLegs) {
+      newScoreJoueur = maxLegs;
+
+      statut = "Terminé";
+
+      resultat =
+        `${match.joueur} gagne`;
+    }
+
+    // --------------------------------------------------
+    // VICTOIRE ADVERSAIRE
+    // --------------------------------------------------
+
+    if (
+      newScoreAdversaire >= maxLegs
+    ) {
+      newScoreAdversaire = maxLegs;
+
+      statut = "Terminé";
+
+      resultat =
+        `${match.adversaire} gagne`;
+    }
+
+    // --------------------------------------------------
+    // SAUVEGARDE
+    // --------------------------------------------------
+
+    const { error } = await supabase
+      .from("live_matches")
+      .update({
+        score_joueur:
+          newScoreJoueur,
+
+        score_adversaire:
+          newScoreAdversaire,
+
+        statut,
+        resultat,
+      })
+      .eq("id", match.id);
+
+    if (error) {
+      console.error(
+        "Erreur mise à jour score :",
+        error
+      );
+
+      setMessage(
+        `❌ Erreur score : ${error.message}`
+      );
+
+      return;
+    }
+
+    await loadMatches();
+
+    // --------------------------------------------------
+    // FIN DU MATCH
+    // --------------------------------------------------
+
+    if (statut === "Terminé") {
+      setActiveTab("latest");
+    }
+  };
+
+  // ==================================================
+  // SUPPRESSION
+  // ==================================================
+
+  const deleteMatch = async (id) => {
+    const confirmation =
+      window.confirm(
+        "Voulez-vous vraiment supprimer ce match ?"
+      );
+
+    if (!confirmation) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("live_matches")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error(
+        "Erreur suppression :",
+        error
+      );
+
+      setMessage(
+        `❌ Impossible de supprimer le match : ${error.message}`
+      );
+
+      return;
+    }
+
+    setMessage(
+      "✅ Match supprimé."
+    );
+
+    await loadMatches();
+  };
+
+  // ==================================================
+  // COULEUR DU SCORE
+  // ==================================================
+
+  const getScoreClass = (
+    score,
+    opponentScore
+  ) => {
+    if (score > opponentScore) {
+      return "score-green";
+    }
+
+    if (score < opponentScore) {
+      return "score-red";
+    }
+
+    return "score-neutral";
+  };
+
+  // ==================================================
+  // CARTE MATCH EN DIRECT
+  // ==================================================
+
+  const LiveMatchCard = ({ match }) => {
+    const scoreJoueur = Number(
+      match.score_joueur || 0
+    );
+
+    const scoreAdversaire = Number(
+      match.score_adversaire || 0
+    );
+
+    return (
+      <div className="live-match-card">
+
+        <div className="match-top">
+
+          <div className="target-badge">
+            🎯 CIBLE{" "}
+            {match.cible_numero}
+          </div>
+
+          <div className="match-status">
+            🔴 EN DIRECT
+          </div>
+
+        </div>
+
+        <div className="players">
+
+          {/* JOUEUR */}
+
+          <div className="player">
+
+            <div className="player-name">
+              {match.joueur}
+            </div>
+
+            <div
+              className={`score-number ${getScoreClass(
+                scoreJoueur,
+                scoreAdversaire
+              )}`}
+            >
+              {scoreJoueur}
+            </div>
+
+            <div className="score-buttons">
+
+              <button
+                className="score-minus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "joueur",
+                    -1
+                  )
+                }
+                disabled={
+                  scoreJoueur === 0
+                }
+              >
+                −
+              </button>
+
+              <button
+                className="score-plus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "joueur",
+                    1
+                  )
+                }
+              >
+                +1
+              </button>
+
+            </div>
+
+          </div>
+
+          {/* VS */}
+
+          <div className="versus">
+            VS
+          </div>
+
+          {/* ADVERSAIRE */}
+
+          <div className="player">
+
+            <div className="player-name">
+              {match.adversaire}
+            </div>
+
+            <div
+              className={`score-number ${getScoreClass(
+                scoreAdversaire,
+                scoreJoueur
+              )}`}
+            >
+              {scoreAdversaire}
+            </div>
+
+            <div className="score-buttons">
+
+              <button
+                className="score-minus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "adversaire",
+                    -1
+                  )
+                }
+                disabled={
+                  scoreAdversaire === 0
+                }
+              >
+                −
+              </button>
+
+              <button
+                className="score-plus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "adversaire",
+                    1
+                  )
+                }
+              >
+                +1
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="progression">
+          🏆 PREMIER À{" "}
+          {match.manches_gagnantes}{" "}
+          MANCHES
+        </div>
+
+      </div>
+    );
+  };
+
+  // ==================================================
+  // CARTE RÉSULTAT
+  // ==================================================
+
+  const ResultCard = ({ match }) => {
+    const scoreJoueur = Number(
+      match.score_joueur || 0
+    );
+
+    const scoreAdversaire = Number(
+      match.score_adversaire || 0
+    );
+
+    const joueurGagnant =
+      scoreJoueur > scoreAdversaire;
+
+    const adversaireGagnant =
+      scoreAdversaire > scoreJoueur;
+
+    return (
+      <div className="result-card">
+
+        <div className="result-header">
+
+          <span>
+            🎯 CIBLE{" "}
+            {match.cible_numero}
+          </span>
+
+          <span className="finished-badge">
+            TERMINÉ
+          </span>
+
+        </div>
+
+        <div className="result-players">
+
+          <div
+            className={`result-player ${
+              joueurGagnant
+                ? "winner"
+                : ""
+            }`}
+          >
+
+            <span>
+              {joueurGagnant &&
+                "🏆 "}
+              {match.joueur}
+            </span>
+
+            <strong>
+              {scoreJoueur}
+            </strong>
+
+          </div>
+
+          <div className="result-vs">
+            VS
+          </div>
+
+          <div
+            className={`result-player ${
+              adversaireGagnant
+                ? "winner"
+                : ""
+            }`}
+          >
+
+            <span>
+              {adversaireGagnant &&
+                "🏆 "}
+              {match.adversaire}
+            </span>
+
+            <strong>
+              {scoreAdversaire}
+            </strong>
+
+          </div>
+
+        </div>
+
+        <div className="result-footer">
+          {match.resultat ||
+            "Match terminé"}
+        </div>
+
+        <div className="result-actions">
+
+          <button
+            onClick={() =>
+              startEdit(match)
+            }
+          >
+            ✏️ Modifier
+          </button>
+
+          <button
+            className="delete-button"
+            onClick={() =>
+              deleteMatch(match.id)
+            }
+          >
+            🗑️ Supprimer
+          </button>
+
+        </div>
+
+      </div>
+    );
+  };
+
+  // ==================================================
+  // CONTENU DES ONGLETS
+  // ==================================================
+
+  const renderSpectatorContent = () => {
+
+    // ------------------------------------------------
+    // EN DIRECT
+    // ------------------------------------------------
+
+    if (activeTab === "live") {
+      return (
+        <>
+          <div className="section-title">
+
+            <h2>
+              🔴 Matchs en direct
+            </h2>
+
+            <span>
+              {liveMatches.length} match
+              {liveMatches.length > 1
+                ? "s"
+                : ""}
+            </span>
+
+          </div>
+
+          {liveMatches.length === 0 ? (
+
+            <div className="empty-state">
+
+              <div className="empty-icon">
+                🎯
+              </div>
+
+              <h3>
+                Aucun match en cours
+              </h3>
+
+              <p>
+                Les prochains matchs
+                apparaîtront ici
+                automatiquement.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="live-grid">
+
+              {liveMatches.map(
+                (match) => (
+                  <LiveMatchCard
+                    key={match.id}
+                    match={match}
+                  />
+                )
+              )}
+
+            </div>
+
+          )}
+        </>
+      );
+    }
+
+    // ------------------------------------------------
+    // DERNIERS MATCHS
+    // ------------------------------------------------
+
+    if (activeTab === "latest") {
+      return (
+        <>
+          <div className="section-title">
+
+            <h2>
+              🏆 Derniers matchs
+            </h2>
+
+            <span>
+              {latestMatches.length} résultat
+              {latestMatches.length > 1
+                ? "s"
+                : ""}
+            </span>
+
+          </div>
+
+          {latestMatches.length === 0 ? (
+
+            <div className="empty-state">
+
+              <div className="empty-icon">
+                🏆
+              </div>
+
+              <h3>
+                Aucun match terminé
+              </h3>
+
+              <p>
+                Les résultats
+                apparaîtront ici dès
+                qu'un match sera
+                terminé.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="results-grid">
+
+              {latestMatches.map(
+                (match) => (
+                  <ResultCard
+                    key={match.id}
+                    match={match}
+                  />
+                )
+              )}
+
+            </div>
+
+          )}
+        </>
+      );
+    }
+        // ------------------------------------------------
+    // TOUS LES RÉSULTATS
+    // ------------------------------------------------
+
+    return (
+      <>
+        <div className="section-title">
+
+          <h2>
+            📋 Tous les résultats
+          </h2>
+
+          <span>
+            {completedMatches.length} match
+            {completedMatches.length > 1
+              ? "s"
+              : ""}
+          </span>
+
+        </div>
+
+        {completedMatches.length === 0 ? (
+
+          <div className="empty-state">
+
+            <div className="empty-icon">
+              📋
+            </div>
+
+            <h3>
+              Aucun résultat
+            </h3>
+
+            <p>
+              L'historique des matchs
+              terminés apparaîtra ici.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="results-grid">
+
+            {completedMatches.map(
+              (match) => (
+                <ResultCard
+                  key={match.id}
+                  match={match}
+                />
+              )
+            )}
+
+          </div>
+
+        )}
+      </>
+    );
+  };
+
+  // ==================================================
+  // AFFICHAGE
+  // ==================================================
+
+  return (
+    <div className="app">
+
+      {/* HEADER */}
+
+      <header className="app-header">
+
+        <div className="header-content">
+
+          <div className="brand">
+
+            <div className="brand-icon">
+              🦁
+            </div>
+
+            <div>
+
+              <h1>
+                MOSELLE DARTS 57
+              </h1>
+
+              <p>
+                LIVE SCORE
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="tournament-info">
+
+            <strong>
+              {settings.tournoi ||
+                tournoi ||
+                "Tournoi"}
+            </strong>
+
+            <span>
+              📍{" "}
+              {settings.lieu ||
+                lieu ||
+                "Lieu"}
+            </span>
+
+          </div>
+
+        </div>
+
+      </header>
+
+      <main className="container">
+
+        {/* ONGLET */}
+
+        <div className="spectator-tabs">
+
+          <button
+            className={
+              activeTab === "live"
+                ? "tab active"
+                : "tab"
+            }
+            onClick={() =>
+              setActiveTab("live")
+            }
+          >
+
+            🔴 EN DIRECT
+
+            {liveMatches.length > 0 && (
+              <span className="tab-count">
+                {liveMatches.length}
+              </span>
+            )}
+
+          </button>
+
+          <button
+            className={
+              activeTab === "latest"
+                ? "tab active"
+                : "tab"
+            }
+            onClick={() =>
+              setActiveTab("latest")
+            }
+          >
+            🏆 DERNIERS MATCHS
+          </button>
+
+          <button
+            className={
+              activeTab === "results"
+                ? "tab active"
+                : "tab"
+            }
+            onClick={() =>
+              setActiveTab("results")
+            }
+          >
+            📋 TOUS LES RÉSULTATS
+          </button>
+
+        </div>
+
+        {/* SPECTATEUR */}
+
+        <section className="spectator-section">
+          {renderSpectatorContent()}
+        </section>
+
+        {/* ADMINISTRATION */}
+
+        <section className="admin-section">
+
+          <div className="admin-title">
+
+            <h2>
+              ⚙️ Administration
+            </h2>
+
+            <span>
+              Gestion du tournoi
+            </span>
+
+          </div>
+
+          {message && (
+            <div className="admin-message">
+              {message}
+            </div>
+          )}
+
+          {/* PARAMÈTRES */}
+
+          <div className="admin-card">
+
+            <h3>
+              🏆 Paramètres du tournoi
+            </h3>
+
+            <div className="form-grid">
+
+              <div className="form-group">
+
+                <label>
+                  Nom du tournoi
+                </label>
+
+                <input
+                  type="text"
+                  value={tournoi}
+                  onChange={(e) =>
+                    setTournoi(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+              <div className="form-group">
+
+                <label>
+                  Lieu
+                </label>
+
+                <input
+                  type="text"
+                  value={lieu}
+                  onChange={(e) =>
+                    setLieu(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={saveSettings}
+            >
+              💾 Enregistrer les paramètres
+            </button>
+
+          </div>
+
+          {/* CRÉATION / MODIFICATION */}
+
+          <div
+            className="admin-card"
+            id="formulaire-match"
+          >
+
+            <h3>
+              {editingId
+                ? "✏️ Modifier le match"
+                : "➕ Ajouter un match"}
+            </h3>
+
+            <form
+              onSubmit={
+                editingId
+                  ? updateMatch
+                  : createMatch
+              }
+            >
+
+              <div className="form-grid">
+
+                <div className="form-group">
+
+                  <label>
+                    Joueur
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Nom du joueur"
+                    value={joueur}
+                    onChange={(e) =>
+                      setJoueur(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+                <div className="form-group">
+
+                  <label>
+                    Adversaire
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Nom de l'adversaire"
+                    value={adversaire}
+                    onChange={(e) =>
+                      setAdversaire(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+                <div className="form-group">
+
+                  <label>
+                    Club du joueur
+                  </label>
+
+                  <input
+                    type="text"
+                    value={clubJoueur}
+                    onChange={(e) =>
+                      setClubJoueur(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+                <div className="form-group">
+
+                  <label>
+                    Club adverse
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Club de l'adversaire"
+                    value={
+                      clubAdversaire
+                    }
+                    onChange={(e) =>
+                      setClubAdversaire(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+                <div className="form-group">
+
+                  <label>
+                    🎯 Numéro de cible
+                  </label>
+
+                  <select
+                    value={cible}
+                    onChange={(e) =>
+                      setCible(
+                        e.target.value
+                      )
+                    }
+                  >
+
+                    <option value="">
+                      Choisir une cible
+                    </option>
+
+                    {Array.from(
+                      {
+                        length: 30,
+                      },
+                      (_, index) =>
+                        index + 1
+                    ).map(
+                      (numero) => (
+                        <option
+                          key={numero}
+                          value={numero}
+                        >
+                          Cible{" "}
+                          {numero}
+                        </option>
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                <div className="form-group">
+
+                  <label>
+                    🏆 Manches gagnantes
+                  </label>
+
+                  <select
+                    value={
+                      manchesGagnantes
+                    }
+                    onChange={(e) =>
+                      setManchesGagnantes(
+                        Number(
+                          e.target.value
+                        )
+                      )
+                    }
+                  >
+
+                    {Array.from(
+                      {
+                        length: 10,
+                      },
+                      (_, index) =>
+                        index + 1
+                    ).map(
+                      (numero) => (
+                        <option
+                          key={numero}
+                          value={numero}
+                        >
+                          Premier à{" "}
+                          {numero}
+                        </option>
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+              <div className="form-actions">
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "⏳ Enregistrement..."
+                    : editingId
+                    ? "💾 Enregistrer les modifications"
+                    : "➕ Créer le match"}
+                </button>
+
+                {editingId && (
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={cancelEdit}
+                  >
+                    ❌ Annuler
+                  </button>
+
+                )}
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </section>
+                {/* ==================================================
+            GESTION DES MATCHS
+        ================================================== */}
+
+        <section className="admin-section">
+
+          <div className="admin-title">
+
+            <h2>
+              📋 Gestion des matchs
+            </h2>
+
+            <span>
+              Administration des résultats
+            </span>
+
+          </div>
+
+          {matches.length === 0 ? (
+
+            <div className="empty-state">
+
+              <div className="empty-icon">
+                🎯
+              </div>
+
+              <h3>
+                Aucun match enregistré
+              </h3>
+
+              <p>
+                Les matchs créés apparaîtront
+                ici pour leur gestion.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="admin-matches-list">
+
+              {matches.map((match) => (
+
+                <div
+                  className="admin-match-row"
+                  key={match.id}
+                >
+
+                  <div className="admin-match-info">
+
+                    <div className="admin-target">
+                      🎯 Cible{" "}
+                      {match.cible_numero}
+                    </div>
+
+                    <div className="admin-players">
+
+                      <strong>
+                        {match.joueur}
+                      </strong>
+
+                      <span>
+                        VS
+                      </span>
+
+                      <strong>
+                        {match.adversaire}
+                      </strong>
+
+                    </div>
+
+                    <div className="admin-clubs">
+
+                      <span>
+                        {match.club_joueur ||
+                          "Autre club"}
+                      </span>
+
+                      <span>
+                        /
+                      </span>
+
+                      <span>
+                        {match.club_adversaire ||
+                          "Autre club"}
+                      </span>
+
+                    </div>
+
+                    <div className="admin-score">
+
+                      <strong>
+                        {Number(
+                          match.score_joueur || 0
+                        )}
+                      </strong>
+
+                      <span>
+                        -
+                      </span>
+
+                      <strong>
+                        {Number(
+                          match.score_adversaire ||
+                            0
+                        )}
+                      </strong>
+
+                    </div>
+
+                    <div className="admin-status">
+
+                      {match.statut ===
+                      "En cours" ? (
+                        <span className="status-live">
+                          🔴 EN COURS
+                        </span>
+                      ) : (
+                        <span className="status-finished">
+                          🏁 TERMINÉ
+                        </span>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                  <div className="admin-match-actions">
+
+                    <button
+                      type="button"
+                      className="edit-button"
+                      onClick={() =>
+                        startEdit(match)
+                      }
+                    >
+                      ✏️ Modifier
+                    </button>
+
+                    <button
+                      type="button"
+                      className="delete-button"
+                      onClick={() =>
+                        deleteMatch(match.id)
+                      }
+                    >
+                      🗑️ Supprimer
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
+      </main>
+
+      {/* ==================================================
+          FOOTER
+      ================================================== */}
+
+      <footer className="app-footer">
+
+        <div className="footer-content">
+
+          <div className="footer-brand">
+
+            <span className="footer-lion">
+              🦁
+            </span>
+
+            <div>
+
+              <strong>
+                MOSELLE DARTS 57
+              </strong>
+
+              <span>
+                Live Score
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="footer-center">
+
+            <span>
+              🎯 Gestion des matchs en direct
+            </span>
+
+          </div>
+
+          <div className="footer-right">
+
+            <span>
+              Live Score • Florange
+            </span>
+
+          </div>
+
+        </div>
+
+      </footer>
+
+    </div>
+  );
+}
+export default App;
