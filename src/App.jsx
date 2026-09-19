@@ -32,6 +32,130 @@ function App() {
   const [message, setMessage] = useState("");
 
   // ==================================================
+  // AUTHENTIFICATION ADMIN
+  // ==================================================
+
+  const [session, setSession] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+
+  const isAdminRoute =
+    window.location.pathname === "/admin";
+    
+  // ==================================================
+  // VÉRIFICATION DE L'ADMINISTRATEUR
+  // ==================================================
+
+  useEffect(() => {
+    let actif = true;
+
+    const verifierAdmin = async () => {
+      const {
+        data: { session: sessionActuelle },
+      } = await supabase.auth.getSession();
+
+      if (!actif) return;
+
+      setSession(sessionActuelle);
+
+      if (!sessionActuelle?.user?.id) {
+        setIsAdmin(false);
+        setAuthLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", sessionActuelle.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error(
+          "Erreur vérification administrateur :",
+          error
+        );
+
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(isAdminRoute && !!data);
+      }
+
+      setAuthLoading(false);
+    };
+
+    verifierAdmin();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, nouvelleSession) => {
+  setSession(nouvelleSession);
+
+  if (!nouvelleSession?.user?.id) {
+    setIsAdmin(false);
+    return;
+  }
+
+  supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", nouvelleSession.user.id)
+    .maybeSingle()
+    .then(({ data, error }) => {
+      if (error) {
+        console.error(
+          "Erreur vérification administrateur :",
+          error
+        );
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(isAdminRoute && !!data);
+      }
+    });
+}
+    );
+
+    return () => {
+      actif = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // ==================================================
+  // CONNEXION ADMINISTRATEUR
+  // ==================================================
+
+  const connexionAdmin = async (e) => {
+    e.preventDefault();
+
+    setMessage("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: adminEmail,
+      password: adminPassword,
+    });
+
+    if (error) {
+      console.error("Erreur connexion admin :", error);
+      setMessage("Identifiant ou mot de passe incorrect.");
+      return;
+    }
+
+    setAdminPassword("");
+    setMessage("Connexion administrateur réussie.");
+  };
+
+  const deconnexionAdmin = async () => {
+    await supabase.auth.signOut();
+    setIsAdmin(false);
+    setSession(null);
+  };
+
+  // ==================================================
   // CHARGEMENT DES MATCHS
   // ==================================================
 
@@ -464,6 +588,9 @@ function App() {
     player,
     amount
   ) => {
+      if (!isAdmin || !isAdminRoute) {
+    return;
+  }
     if (match.statut !== "En cours") {
       return;
     }
@@ -683,34 +810,38 @@ function App() {
 
             <div className="score-buttons">
 
-              <button
-                className="score-minus"
-                onClick={() =>
-                  updateScore(
-                    match,
-                    "joueur",
-                    -1
-                  )
-                }
-                disabled={
-                  scoreJoueur === 0
-                }
-              >
-                −
-              </button>
+             {isAdmin && (
+  <button
+    className="score-minus"
+    onClick={() =>
+      updateScore(
+        match,
+        "joueur",
+        -1
+      )
+    }
+    disabled={
+      scoreJoueur === 0
+    }
+  >
+    −
+  </button>
+)}
 
-              <button
-                className="score-plus"
-                onClick={() =>
-                  updateScore(
-                    match,
-                    "joueur",
-                    1
-                  )
-                }
-              >
-                +1
-              </button>
+                            {isAdmin && (
+                <button
+                  className="score-plus"
+                  onClick={() =>
+                    updateScore(
+                      match,
+                      "joueur",
+                      1
+                    )
+                  }
+                >
+                  +1
+                </button>
+              )}
 
             </div>
 
@@ -741,23 +872,26 @@ function App() {
 
             <div className="score-buttons">
 
-              <button
-                className="score-minus"
-                onClick={() =>
-                  updateScore(
-                    match,
-                    "adversaire",
-                    -1
-                  )
-                }
-                disabled={
-                  scoreAdversaire === 0
-                }
-              >
-                −
-              </button>
+                            {isAdmin && (
+                <button
+                  className="score-minus"
+                  onClick={() =>
+                    updateScore(
+                      match,
+                      "adversaire",
+                      -1
+                    )
+                  }
+                  disabled={
+                    scoreAdversaire === 0
+                  }
+                >
+                  −
+                </button>
+              )}
 
-              <button
+                            <button
+                hidden={!isAdmin}
                 className="score-plus"
                 onClick={() =>
                   updateScore(
@@ -868,15 +1002,18 @@ function App() {
           </div>
 
         </div>
-
+        
         <div className="result-footer">
           {match.resultat ||
             "Match terminé"}
         </div>
 
-        <div className="result-actions">
+        {isAdmin && isAdminRoute && (
+  <div className="result-actions">
 
           <button
+          
+          hidden={!isAdmin}
             onClick={() =>
               startEdit(match)
             }
@@ -885,6 +1022,7 @@ function App() {
           </button>
 
           <button
+          hidden={!isAdmin}
             className="delete-button"
             onClick={() =>
               deleteMatch(match.id)
@@ -894,7 +1032,7 @@ function App() {
           </button>
 
         </div>
-
+)}
       </div>
     );
   };
@@ -1093,55 +1231,108 @@ function App() {
   // AFFICHAGE
   // ==================================================
 
-  return (
+ return (
+
+  <>
+    {isAdminRoute && !isAdmin && (
+      <div className="admin-login">
+        <h2>🔐 Administration</h2>
+
+        <p>Connexion réservée à l'administrateur</p>
+
+        <form onSubmit={connexionAdmin}>
+
+          <input
+            type="email"
+            placeholder="Adresse e-mail"
+            value={adminEmail}
+            onChange={(e) => setAdminEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit">
+            Se connecter
+          </button>
+
+        </form>
+
+        {message && (
+          <p>{message}</p>
+        )}
+      </div>
+    )}
+
     <div className="app">
 
       {/* HEADER */}
 
       <header className="app-header">
 
-        <div className="header-content">
+  <div className="header-content">
 
-          <div className="brand">
+    {/* GAUCHE : LOGO ET NOM DU CLUB */}
+    <div className="brand">
 
-            <div className="brand-icon">
-              🦁
-            </div>
+      <div className="brand-icon">
+        🦁
+      </div>
 
-            <div>
+      <div>
+        <h1>
+          MOSELLE DARTS 57
+        </h1>
 
-              <h1>
-                MOSELLE DARTS 57
-              </h1>
+        <p>
+          LIVE SCORE
+        </p>
+      </div>
 
-              <p>
-                LIVE SCORE
-              </p>
+    </div>
 
-            </div>
+    {/* CENTRE : DÉCONNEXION ADMIN */}
+    <div className="admin-header-action">
 
-          </div>
+      {isAdminRoute && isAdmin && (
+        <button
+          type="button"
+          onClick={deconnexionAdmin}
+          className="admin-logout"
+        >
+          🚪 Déconnexion
+        </button>
+      )}
 
-          <div className="tournament-info">
+    </div>
 
-            <strong>
-              {settings.tournoi ||
-                tournoi ||
-                "Tournoi"}
-            </strong>
+    {/* DROITE : TOURNOI ET VILLE */}
+    <div className="tournament-info">
 
-            <span>
-              📍{" "}
-              {settings.lieu ||
-                lieu ||
-                "Lieu"}
-            </span>
+      <strong>
+        {settings.tournoi ||
+          tournoi ||
+          "Tournoi"}
+      </strong>
 
-          </div>
+      <span>
+        📍{" "}
+        {settings.lieu ||
+          lieu ||
+          "Lieu"}
+      </span>
 
-        </div>
+    </div>
 
-      </header>
+  </div>
+
+</header>
 
       <main className="container">
 
@@ -1206,7 +1397,8 @@ function App() {
 
         {/* ADMINISTRATION */}
 
-        <section className="admin-section">
+{isAdminRoute && isAdmin && (
+  <section className="admin-section">
 
           <div className="admin-title">
 
@@ -1471,6 +1663,7 @@ function App() {
               <div className="form-actions">
 
                 <button
+                hidden={!isAdmin}
                   type="submit"
                   className="primary-button"
                   disabled={loading}
@@ -1501,11 +1694,13 @@ function App() {
           </div>
 
         </section>
-                {/* ==================================================
-            GESTION DES MATCHS
-        ================================================== */}
+        )}
+      {/* ==================================================
+    GESTION DES MATCHS
+================================================== */}
 
-        <section className="admin-section">
+{isAdminRoute && isAdmin && (
+  <section className="admin-section">
 
           <div className="admin-title">
 
@@ -1661,8 +1856,9 @@ function App() {
           )}
 
         </section>
-
+)}
       </main>
+
 
       {/* ==================================================
           FOOTER
@@ -1713,6 +1909,7 @@ function App() {
       </footer>
 
     </div>
+      </>
   );
 }
 export default App;
