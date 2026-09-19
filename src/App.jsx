@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./supabaseClient";
 import "./App.css";
+import md57Logo from "./assets/md57-logo-transparent.png"; 
 
 const CLUB_NAME = "Moselle Darts 57";
 
@@ -765,133 +766,136 @@ function App() {
   // ==================================================
 
   const LiveMatchCard = ({ match }) => {
-    const scoreJoueur = Number(
-      match.score_joueur || 0
-    );
+  const scoreJoueur = Number(
+    match.score_joueur || 0
+  );
 
-    const scoreAdversaire = Number(
-      match.score_adversaire || 0
-    );
+  const scoreAdversaire = Number(
+    match.score_adversaire || 0
+  );
 
-    return (
-      <div className="live-match-card">
+  return (
+    <div className="live-match-card">
 
-        <div className="match-top">
+      <div className="match-top">
 
-          <div className="target-badge">
-            🎯 CIBLE{" "}
-            {match.cible_numero}
+        <div className="target-badge">
+          🎯 CIBLE {match.cible_numero}
+        </div>
+
+        <div className="match-status">
+          🔴 EN DIRECT
+        </div>
+
+      </div>
+
+      <div className="players">
+
+        {/* JOUEUR MOSELLE DARTS */}
+
+        <div className="player">
+
+          <div className="player-name">
+            {match.joueur}
           </div>
 
-          <div className="match-status">
-            🔴 EN DIRECT
+          <div className="player-club">
+            {match.club_joueur || ""}
+          </div>
+
+          <div
+            className={`score-number ${getScoreClass(
+              scoreJoueur,
+              scoreAdversaire
+            )}`}
+          >
+            {scoreJoueur}
+          </div>
+
+          <div className="score-buttons">
+
+            {isAdmin && (
+              <button
+                className="score-minus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "joueur",
+                    -1
+                  )
+                }
+                disabled={scoreJoueur === 0}
+              >
+                −
+              </button>
+            )}
+
+            {isAdmin && (
+              <button
+                className="score-plus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "joueur",
+                    1
+                  )
+                }
+              >
+                +1
+              </button>
+            )}
+
           </div>
 
         </div>
 
-        <div className="players">
+        {/* VS */}
 
-          {/* JOUEUR */}
+        <div className="versus">
+          VS
+        </div>
 
-          <div className="player">
+        {/* ADVERSAIRE */}
 
-            <div className="player-name">
-              {match.joueur}
-            </div>
+        <div className="player">
 
-            <div
-              className={`score-number ${getScoreClass(
-                scoreJoueur,
-                scoreAdversaire
-              )}`}
-            >
-              {scoreJoueur}
-            </div>
-
-            <div className="score-buttons">
-
-             {isAdmin && (
-  <button
-    className="score-minus"
-    onClick={() =>
-      updateScore(
-        match,
-        "joueur",
-        -1
-      )
-    }
-    disabled={
-      scoreJoueur === 0
-    }
-  >
-    −
-  </button>
-)}
-
-                            {isAdmin && (
-                <button
-                  className="score-plus"
-                  onClick={() =>
-                    updateScore(
-                      match,
-                      "joueur",
-                      1
-                    )
-                  }
-                >
-                  +1
-                </button>
-              )}
-
-            </div>
-
+          <div className="player-name">
+            {match.adversaire}
           </div>
 
-          {/* VS */}
-
-          <div className="versus">
-            VS
+          <div className="player-club">
+            {match.club_adversaire || ""}
           </div>
 
-          {/* ADVERSAIRE */}
+          <div
+            className={`score-number ${getScoreClass(
+              scoreAdversaire,
+              scoreJoueur
+            )}`}
+          >
+            {scoreAdversaire}
+          </div>
 
-          <div className="player">
+          <div className="score-buttons">
 
-            <div className="player-name">
-              {match.adversaire}
-            </div>
+            {isAdmin && (
+              <button
+                className="score-minus"
+                onClick={() =>
+                  updateScore(
+                    match,
+                    "adversaire",
+                    -1
+                  )
+                }
+                disabled={scoreAdversaire === 0}
+              >
+                −
+              </button>
+            )}
 
-            <div
-              className={`score-number ${getScoreClass(
-                scoreAdversaire,
-                scoreJoueur
-              )}`}
-            >
-              {scoreAdversaire}
-            </div>
-
-            <div className="score-buttons">
-
-                            {isAdmin && (
-                <button
-                  className="score-minus"
-                  onClick={() =>
-                    updateScore(
-                      match,
-                      "adversaire",
-                      -1
-                    )
-                  }
-                  disabled={
-                    scoreAdversaire === 0
-                  }
-                >
-                  −
-                </button>
-              )}
-
-                            <button
-                hidden={!isAdmin}
+            {isAdmin && (
+              <button
                 className="score-plus"
                 onClick={() =>
                   updateScore(
@@ -903,23 +907,23 @@ function App() {
               >
                 +1
               </button>
-
-            </div>
+            )}
 
           </div>
 
         </div>
 
-        <div className="progression">
-          🏆 PREMIER À{" "}
-          {match.manches_gagnantes}{" "}
-          MANCHES
-        </div>
-
       </div>
-    );
-  };
 
+      <div className="progression">
+        🏆 PREMIER À{" "}
+        {match.manches_gagnantes}{" "}
+        MANCHES
+      </div>
+
+    </div>
+  );
+};
   // ==================================================
   // CARTE RÉSULTAT
   // ==================================================
@@ -1281,22 +1285,23 @@ function App() {
     {/* GAUCHE : LOGO ET NOM DU CLUB */}
     <div className="brand">
 
-      <div className="brand-icon">
-        🦁
-      </div>
+  <img
+    src={md57Logo}
+    alt="Moselle Darts 57"
+    className="brand-logo"
+  />
 
-      <div>
-        <h1>
-          MOSELLE DARTS 57
-        </h1>
+  <div>
+    <h1>
+      MOSELLE DARTS 57
+    </h1>
 
-        <p>
-          LIVE SCORE
-        </p>
-      </div>
+    <p>
+      LIVE SCORE
+    </p>
+  </div>
 
-    </div>
-
+</div>
     {/* CENTRE : DÉCONNEXION ADMIN */}
     <div className="admin-header-action">
 

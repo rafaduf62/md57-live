@@ -1456,3 +1456,1210 @@ button {
 .admin-logout:hover {
   opacity: 0.85;
 }
+/* ==================================================
+   MD57 LIVE - NOUVELLE IDENTITÉ VISUELLE
+   ================================================== */
+
+:root {
+  --md57-navy: #071a33;
+  --md57-blue: #0d2f5b;
+  --md57-red: #d71920;
+  --md57-white: #ffffff;
+  --md57-light: #f4f6f9;
+  --md57-green: #16a34a;
+  --md57-text: #172033;
+  --md57-border: #d9dee7;
+}
+
+/* Fond général */
+body {
+  background: var(--md57-light);
+  color: var(--md57-text);
+}
+
+/* En-tête */
+.app-header {
+  background: linear-gradient(
+    135deg,
+    var(--md57-navy),
+    var(--md57-blue)
+  );
+  color: var(--md57-white);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* Zone principale */
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Titres */
+h1,
+h2,
+h3 {
+  color: var(--md57-navy);
+}
+
+/* Cartes */
+.match-card,
+.result-card {
+  background: var(--md57-white);
+  border: 1px solid var(--md57-border);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(7, 26, 51, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.match-card:hover,
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(7, 26, 51, 0.13);
+}
+
+/* Cible */
+.target-number,
+.cible-number {
+  color: var(--md57-red);
+  font-weight: 900;
+}
+
+/* Statut en cours */
+.status-live,
+.live-status {
+  color: var(--md57-green);
+  font-weight: 800;
+}
+
+/* Scores */
+.score,
+.score-number {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--md57-navy);
+}
+
+/* Joueurs */
+.player-name {
+  font-weight: 800;
+  color: var(--md57-navy);
+}
+
+/* Séparateur VS */
+.vs {
+  font-weight: 900;
+  color: var(--md57-red);
+  letter-spacing: 1px;
+}
+
+/* Boutons */
+button {
+  border-radius: 8px;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* Version mobile */
+@media (max-width: 700px) {
+  .app {
+    padding: 12px;
+  }
+
+  .match-card,
+  .result-card {
+    border-radius: 12px;
+  }
+
+  .score,
+  .score-number {
+    font-size: 3rem;
+  }
+}
+/* ==================================================
+   MD57 LIVE - FOND SOMBRE / SCORES
+   ================================================== */
+
+body {
+  background: #07111f;
+  color: #f5f7fa;
+}
+
+/* Zone principale */
+.app {
+  background: #07111f;
+}
+
+/* Titres */
+h1,
+h2,
+h3 {
+  color: #ffffff;
+}
+
+/* Cartes de matchs */
+.match-card,
+.result-card {
+  background: #10213a;
+  border: 1px solid #263b57;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+}
+
+/* Noms des joueurs */
+.player-name {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Numéro de cible */
+.target-number,
+.cible-number {
+  color: #e31b23;
+  font-weight: 900;
+}
+
+/* VS */
+.vs {
+  color: #e31b23;
+  font-weight: 900;
+}
+
+/* =========================
+   SCORES
+   ========================= */
+
+/* Score neutre */
+.score,
+.score-number {
+  color: #ffffff;
+  font-size: clamp(2.8rem, 7vw, 4.5rem);
+  font-weight: 900;
+}
+
+/* Score gagnant */
+.score-winner {
+  color: #22c55e !important;
+  font-weight: 900;
+}
+
+/* Score perdant */
+.score-loser {
+  color: #ef4444 !important;
+  font-weight: 900;
+}
+
+/* Match terminé */
+.result-winner {
+  color: #22c55e !important;
+  font-weight: 900;
+}
+
+.result-loser {
+  color: #ef4444 !important;
+  font-weight: 900;
+}
+
+/* Statut EN COURS */
+.status-live,
+.live-status {
+  color: #22c55e;
+  font-weight: 900;
+}
+
+/* Boutons */
+button {
+  font-weight: 700;
+}
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width: 700px) {
+  body {
+    background: #07111f;
+  }
+
+  .app {
+    padding: 12px;
+  }
+
+  .match-card,
+  .result-card {
+    border-radius: 14px;
+  }
+
+  .score,
+  .score-number {
+    font-size: 3.2rem;
+  }
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+/* =========================================
+   MD57 LIVE - LION EN FILIGRANE
+   ========================================= */
+
+.app {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.app::before {
+  content: "";
+  position: absolute;
+  top: 120px;
+  right: -80px;
+  width: 620px;
+  height: 900px;
+
+  background-image: url("./assets/md57-lion-watermark.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+
+  opacity: 0.10;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Le contenu reste toujours au-dessus du lion */
+.app > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Version téléphone */
+/* =========================================
+   MD57 LIVE - LION EN FILIGRANE
+   ========================================= */
+
+.app {
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+}
+
+/* Lion plein écran */
+.app::before {
+  content: "";
+  position: fixed;
+  top: 80px;
+  right: 0;
+
+  width: 55vw;
+  height: calc(100vh - 80px);
+
+  background-image: url("./assets/md57-lion-watermark.png");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: contain;
+
+  opacity: 0.40;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Tout le contenu reste au-dessus du lion */
+.app > * {
+  position: relative;
+  z-index: 1;
+}
+/* =========================================
+   MD57 LIVE - CARTES DES MATCHS
+   ========================================= */
+
+.match-card {
+  position: relative;
+  background: rgba(16, 33, 58, 0.88);
+  border: 1px solid rgba(80, 110, 145, 0.55);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(5px);
+}
+
+/* Cible */
+.target-number,
+.cible-number {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+/* Noms des joueurs */
+.player-name {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+/* Clubs */
+.player-club {
+  font-size: 0.85rem;
+  color: #aebed2;
+}
+
+/* Scores */
+.score,
+.score-number {
+  min-width: 64px;
+  text-align: center;
+  font-size: 3.4rem;
+  line-height: 1;
+  font-weight: 900;
+}
+
+/* Score gagnant */
+.score-winner {
+  color: #22c55e !important;
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+}
+
+/* Score perdant */
+.score-loser {
+  color: #ef4444 !important;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.30);
+}
+
+/* VS */
+.vs {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+/* Statut EN DIRECT */
+.status-live,
+.live-status {
+  color: #ff3341;
+  font-weight: 900;
+}
+/* =========================================
+   MD57 LIVE - NOUVELLE CARTE MATCH
+   ========================================= */
+
+.live-match-card {
+  position: relative;
+  background: rgba(11, 31, 54, 0.88);
+  border: 1px solid rgba(91, 125, 160, 0.65);
+  border-top: 4px solid #e31b23;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(6px);
+}
+
+/* Ligne supérieure : cible + direct */
+
+.live-match-card .match-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 28px;
+}
+
+.live-match-card .target-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 9px;
+  background: rgba(52, 82, 115, 0.70);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.live-match-card .match-status {
+  color: #ff3341;
+  font-size: 0.90rem;
+  font-weight: 900;
+}
+
+/* Joueurs */
+
+.live-match-card .players {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.live-match-card .player {
+  text-align: center;
+  min-width: 0;
+}
+
+.live-match-card .player-name {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+  min-height: 30px;
+  overflow-wrap: anywhere;
+}
+
+/* Scores */
+
+.live-match-card .score-number {
+  font-size: clamp(3.5rem, 8vw, 5rem);
+  line-height: 1;
+  font-weight: 900;
+  margin: 8px 0;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
+}
+
+/* Gagnant */
+
+/* =========================================
+   MD57 LIVE - SCORES
+   ========================================= */
+
+.live-match-card .score-number {
+  min-width: 75px;
+  font-size: clamp(4rem, 9vw, 5.5rem);
+  line-height: 0.95;
+  font-weight: 950;
+  text-align: center;
+  margin: 10px auto;
+
+  font-variant-numeric: tabular-nums;
+}
+
+/* 🟢 SCORE GAGNANT */
+
+.live-match-card .score-green {
+  color: #22c55e !important;
+  text-shadow:
+    0 0 8px rgba(34, 197, 94, 0.55),
+    0 0 22px rgba(34, 197, 94, 0.35);
+}
+
+/* 🔴 SCORE PERDANT */
+
+.live-match-card .score-red {
+  color: #ef4444 !important;
+  text-shadow:
+    0 0 8px rgba(239, 68, 68, 0.50),
+    0 0 20px rgba(239, 68, 68, 0.30);
+}
+
+/* ⚪ ÉGALITÉ */
+
+.live-match-card .score-neutral {
+  color: #ffffff !important;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.20);
+}
+/* VS */
+
+.live-match-card .versus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+  opacity: 0.75;
+}
+
+/* Boutons administrateur */
+
+.live-match-card .score-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.live-match-card .score-buttons button {
+  min-width: 42px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* Progression */
+
+.live-match-card .progression {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  color: #aebed2;
+  font-size: 0.90rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+@media (max-width: 700px) {
+
+  .live-match-card {
+    padding: 16px;
+    border-radius: 15px;
+  }
+
+  .live-match-card .players {
+    grid-template-columns: 1fr 45px 1fr;
+    gap: 8px;
+  }
+
+  .live-match-card .player-name {
+    font-size: 1rem;
+  }
+
+  .live-match-card .score-number {
+    font-size: 3.4rem;
+  }
+
+  .live-match-card .versus {
+    font-size: 0.85rem;
+  }
+
+}
+/* 📱 VERSION TÉLÉPHONE */
+@media (max-width: 700px) {
+
+  .live-match-card .score-number {
+    min-width: 55px;
+    font-size: 3.6rem;
+  }
+
+}
+/* =========================================
+   MD57 LIVE - VERSION MOBILE
+   ========================================= */
+
+@media (max-width: 700px) {
+
+  .app {
+    padding: 10px;
+  }
+
+  /* HEADER */
+  .header-content {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .brand {
+    justify-self: center;
+    text-align: center;
+  }
+
+  .brand-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .tournament-info {
+    justify-self: center;
+    text-align: center;
+  }
+
+  .admin-header-action {
+    justify-self: center;
+  }
+
+  /* CARTES MATCH */
+  .live-match-card {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 14px;
+  }
+
+  .live-match-card .match-top {
+    margin-bottom: 18px;
+  }
+
+  .live-match-card .target-badge {
+    font-size: 0.85rem;
+    padding: 7px 10px;
+  }
+
+  .live-match-card .match-status {
+    font-size: 0.80rem;
+  }
+
+  /* JOUEURS + SCORES */
+  .live-match-card .players {
+    grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .live-match-card .player-name {
+    font-size: 0.95rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .live-match-card .score-number {
+    font-size: 3.4rem;
+    min-width: 0;
+  }
+
+  .live-match-card .versus {
+    font-size: 0.75rem;
+  }
+
+  /* BOUTONS ADMIN */
+  .live-match-card .score-buttons button {
+    min-width: 38px;
+    height: 34px;
+    font-size: 1rem;
+  }
+
+  /* PREMIER À X MANCHES */
+  .live-match-card .progression {
+    margin-top: 16px;
+    padding-top: 13px;
+    font-size: 0.78rem;
+  }
+
+}
+/* =========================================
+   MD57 LIVE - DERNIERS MATCHS
+   ========================================= */
+
+.result-card {
+  position: relative;
+  background: rgba(11, 31, 54, 0.90);
+  border: 1px solid rgba(91, 125, 160, 0.60);
+  border-left: 4px solid #475569;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(6px);
+}
+
+/* En-tête */
+
+.result-card .result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Badge TERMINÉ */
+
+.result-card .finished-badge {
+  padding: 6px 10px;
+  border-radius: 7px;
+
+  background: rgba(71, 85, 105, 0.75);
+  color: #dbe4ef;
+
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+/* Joueurs */
+
+.result-card .result-players {
+  display: grid;
+  grid-template-columns: 1fr 45px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-card .result-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 0;
+  text-align: center;
+
+  color: #ffffff;
+}
+
+/* Nom joueur */
+
+.result-card .result-player span {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* Score */
+
+.result-card .result-player strong {
+  margin-top: 8px;
+
+  font-size: 2.8rem;
+  line-height: 1;
+
+  font-weight: 950;
+  color: #cbd5e1;
+
+  font-variant-numeric: tabular-nums;
+}
+
+/* Gagnant */
+
+.result-card .result-player.winner {
+  color: #22c55e;
+}
+
+.result-card .result-player.winner strong {
+  color: #22c55e;
+
+  text-shadow:
+    0 0 8px rgba(34, 197, 94, 0.50),
+    0 0 18px rgba(34, 197, 94, 0.25);
+}
+
+/* VS */
+
+.result-card .result-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 900;
+  opacity: 0.65;
+}
+
+/* Résultat texte */
+
+.result-card .result-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+
+  text-align: center;
+
+  color: #9fb0c4;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* Boutons administrateur */
+
+.result-card .result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.result-card .result-actions button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 7px;
+
+  font-weight: 800;
+  cursor: pointer;
+}
+@media (max-width: 700px) {
+
+  .result-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .result-card .result-header {
+    margin-bottom: 15px;
+    font-size: 0.85rem;
+  }
+
+  .result-card .result-players {
+    grid-template-columns: minmax(0, 1fr) 35px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .result-card .result-player span {
+    font-size: 0.9rem;
+  }
+
+  .result-card .result-player strong {
+    font-size: 2.4rem;
+  }
+
+  .result-card .result-vs {
+    font-size: 0.75rem;
+  }
+
+}
+/* =========================================
+   MD57 LIVE - TOURNOI ET LIEU
+   ========================================= */
+
+.tournament-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.tournament-info strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.tournament-info span {
+  color: #c4d0df;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+/* Petit accent sous le tournoi */
+
+.tournament-info strong::after {
+  content: "";
+  display: block;
+  width: 55px;
+  height: 3px;
+  margin-top: 6px;
+  margin-left: auto;
+  border-radius: 3px;
+  background: #e31b23;
+}
+
+/* 📱 Téléphone */
+
+@media (max-width: 700px) {
+
+  .tournament-info {
+    align-items: center;
+    text-align: center;
+  }
+
+  .tournament-info strong {
+    font-size: 0.95rem;
+  }
+
+  .tournament-info span {
+    font-size: 0.82rem;
+  }
+
+  .tournament-info strong::after {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+}
+/* =========================================
+   MD57 LIVE - STATUT EN DIRECT
+   ========================================= */
+
+.live-match-card .match-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #ff3341;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+/* Animation discrète du statut */
+
+.live-match-card .match-status {
+  animation: md57LivePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes md57LivePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 📱 Téléphone */
+
+@media (max-width: 700px) {
+
+  .live-match-card .match-status {
+    font-size: 0.78rem;
+  }
+
+}
+/* =========================================
+   MD57 LIVE - ESPACE ADMINISTRATEUR
+   ========================================= */
+
+.admin-section {
+  margin-top: 30px;
+  padding: 24px;
+
+  background: rgba(7, 17, 31, 0.92);
+  border: 1px solid rgba(91, 125, 160, 0.55);
+  border-radius: 18px;
+
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(8px);
+}
+
+/* Titre administration */
+
+.admin-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.admin-title h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.admin-title span {
+  color: #9fb0c4;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* Message */
+
+.admin-message {
+  margin-bottom: 20px;
+  padding: 12px 15px;
+
+  border-radius: 10px;
+
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.30);
+
+  color: #86efac;
+  font-weight: 800;
+}
+
+/* Cartes administration */
+
+.admin-card {
+  margin-bottom: 20px;
+  padding: 20px;
+
+  background: rgba(16, 33, 58, 0.92);
+  border: 1px solid rgba(91, 125, 160, 0.45);
+  border-radius: 14px;
+}
+
+.admin-card h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+/* Formulaires */
+
+.admin-section .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-section .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.admin-section .form-group label {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.admin-section .form-group input,
+.admin-section .form-group select {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 11px 13px;
+
+  border: 1px solid #405773;
+  border-radius: 8px;
+
+  background: #0b1f36;
+  color: #ffffff;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  outline: none;
+}
+
+.admin-section .form-group input:focus,
+.admin-section .form-group select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+/* Actions */
+
+.admin-section .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.admin-section .primary-button,
+.admin-section .secondary-button {
+  padding: 11px 17px;
+
+  border: none;
+  border-radius: 8px;
+
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.admin-section .primary-button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.admin-section .primary-button:hover {
+  background: #1d4ed8;
+}
+
+.admin-section .secondary-button {
+  background: #475569;
+  color: #ffffff;
+}
+
+.admin-section .secondary-button:hover {
+  background: #64748b;
+}
+
+/* 📱 VERSION MOBILE */
+
+@media (max-width: 700px) {
+
+  .admin-section {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .admin-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-title h2 {
+    font-size: 1.25rem;
+  }
+
+  .admin-section .form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .admin-card {
+    padding: 15px;
+  }
+
+  .admin-section .form-actions {
+    flex-direction: column;
+  }
+
+  .admin-section .primary-button,
+  .admin-section .secondary-button {
+    width: 100%;
+  }
+
+}
+/* =========================================
+   MD57 LIVE - FINITION MOBILE
+   ========================================= */
+
+@media (max-width: 700px) {
+
+  .live-match-card {
+    padding: 13px;
+    margin-bottom: 12px;
+  }
+
+  .live-match-card .match-top {
+    margin-bottom: 13px;
+  }
+
+  .live-match-card .player-name {
+    margin-bottom: 3px;
+  }
+
+  .live-match-card .player-club {
+    margin-top: 2px;
+    line-height: 1.1;
+  }
+
+  .live-match-card .score-number {
+    margin: 6px auto;
+  }
+
+  .live-match-card .score-buttons {
+    margin-top: 4px;
+  }
+
+  .live-match-card .progression {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+}
