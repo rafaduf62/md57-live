@@ -1546,6 +1546,46 @@ return (
 
 </header>
 
+{menuOuvert && (
+  <div className="menu-overlay">
+    <div className="side-menu">
+
+      <button
+        type="button"
+        className="menu-close"
+        onClick={() => setMenuOuvert(false)}
+        aria-label="Fermer le menu"
+      >
+        ✕
+      </button>
+
+      <div className="side-menu-title">
+        🦁 MD57 LIVE
+      </div>
+
+      <nav className="side-menu-nav">
+        <button type="button">🏠 Accueil</button>
+        <button type="button">🔴 Live</button>
+        <button type="button">🏆 Tournois</button>
+        <button type="button">🥇 Championnat</button>
+        <button type="button">📊 Classements</button>
+        <button type="button">👥 Membres</button>
+        <button type="button">📅 Événements</button>
+        <button type="button">🎯 Entraînements</button>
+        <button type="button">📰 Actualités</button>
+        <button type="button">🛍️ Boutique</button>
+        <button type="button">📸 Galerie</button>
+        <button type="button">🤝 Partenaires</button>
+        <button type="button">💬 Communauté</button>
+        <button type="button">⚙️ Administration</button>
+      </nav>
+
+    </div>
+  </div>
+)}
+
+<main className="container"></main>
+
       <main className="container">
 
         {/* ONGLET */}
