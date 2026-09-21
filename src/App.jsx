@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 import "./App.css";
 import md57Logo from "./assets/md57-logo-transparent.png"; 
@@ -6,7 +6,14 @@ import md57Logo from "./assets/md57-logo-transparent.png";
 const CLUB_NAME = "Moselle Darts 57";
 
 function App() {
+  console.log("MD57 APP CHARGEE");
   const [matches, setMatches] = useState([]);
+  const [spectateursLive, setSpectateursLive] = useState(0);
+  const [matchAlerte, setMatchAlerte] = useState(null);
+  const dernierMatchAlerte = useRef(null);
+  const initialisationAlertes = useRef(false);
+  const audioContextRef = useRef(null);
+const alertesSonoresActivees = useRef(false);
 
   const [settings, setSettings] = useState({
     tournoi: "",
@@ -125,6 +132,35 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
+  useEffect(() => {
+  const sessionId = crypto.randomUUID();
+
+  const channel = supabase.channel("md57-live-viewers");
+
+  channel
+    .on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState();
+
+      const nombreSpectateurs = Object.values(state).reduce(
+        (total, personnes) => total + personnes.length,
+        0
+      );
+
+      setSpectateursLive(nombreSpectateurs);
+    })
+    .subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await channel.track({
+          session_id: sessionId,
+          type: "spectateur",
+        });
+      }
+    });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   // ==================================================
   // CONNEXION ADMINISTRATEUR
@@ -175,12 +211,38 @@ function App() {
     }
 
     setMatches(data || []);
-  };
 
+
+  };
   // ==================================================
   // CHARGEMENT DES PARAMÈTRES
   // ==================================================
+useEffect(() => {
+  const matchsEnCours = matches.filter(
+    (match) => match.statut === "En cours"
+  );
 
+  if (!initialisationAlertes.current) {
+    dernierMatchAlerte.current = new Set(
+      matchsEnCours.map((match) => match.id)
+    );
+
+    initialisationAlertes.current = true;
+    return;
+  }
+
+  const nouveauMatch = matchsEnCours.find(
+    (match) => !dernierMatchAlerte.current.has(match.id)
+  );
+
+  if (nouveauMatch) {
+    setMatchAlerte(nouveauMatch);
+  }
+
+  dernierMatchAlerte.current = new Set(
+    matchsEnCours.map((match) => match.id)
+  );
+}, [matches]);
   const loadSettings = async () => {
     const { data, error } = await supabase
       .from("live_settings")
@@ -210,6 +272,50 @@ function App() {
 
   useEffect(() => {
     loadSettings();
+    const activerAlertesSonores = () => {
+  const AudioContext =
+    window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContext) {
+    return;
+  }
+
+  if (!audioContextRef.current) {
+    audioContextRef.current = new AudioContext();
+  }
+
+  audioContextRef.current.resume();
+  alertesSonoresActivees.current = true;
+
+  const oscillator = audioContextRef.current.createOscillator();
+  const gainNode = audioContextRef.current.createGain();
+
+  oscillator.frequency.value = 880;
+  oscillator.type = "sine";
+
+  gainNode.gain.setValueAtTime(
+    0.0001,
+    audioContextRef.current.currentTime
+  );
+
+  gainNode.gain.exponentialRampToValueAtTime(
+    0.25,
+    audioContextRef.current.currentTime + 0.02
+  );
+
+  gainNode.gain.exponentialRampToValueAtTime(
+    0.0001,
+    audioContextRef.current.currentTime + 0.25
+  );
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContextRef.current.destination);
+
+  oscillator.start();
+  oscillator.stop(
+    audioContextRef.current.currentTime + 0.25
+  );
+};
     loadMatches();
 
     const interval = setInterval(() => {
@@ -775,6 +881,7 @@ function App() {
   );
 
   return (
+    
     <div className="live-match-card">
 
       <div className="match-top">
@@ -1174,7 +1281,6 @@ function App() {
         // ------------------------------------------------
     // TOUS LES RÉSULTATS
     // ------------------------------------------------
-
     return (
       <>
         <div className="section-title">
@@ -1227,53 +1333,144 @@ function App() {
           </div>
 
         )}
-      </>
-    );
-  };
+        
 
+      {isAdminRoute && !isAdmin && (
+        <div className="admin-login">
+          <h2>🔐 Administration</h2>
+
+          <p>Connexion réservée à l'administrateur</p>
+
+          <form onSubmit={connexionAdmin}>
+            <input
+              type="email"
+              placeholder="Adresse e-mail"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+              autoComplete="email"
+            />
+
+            <input
+              type="password"
+              placeholder="Mot de passe"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+
+            <button type="submit">
+              🔐 SE CONNECTER
+            </button>
+          </form>
+
+          {message && (
+            <p className="admin-message">
+              {message}
+            </p>
+          )}
+        </div>
+      )}
+          </>
+  );
+};
   // ==================================================
   // AFFICHAGE
   // ==================================================
+  
+console.log("MD57 RETURN PRINCIPAL");
 
- return (
-
+return (
+  
   <>
-    {isAdminRoute && !isAdmin && (
-      <div className="admin-login">
-        <h2>🔐 Administration</h2>
+<div className="spectateurs-live">
+  🟢 👁️ {spectateursLive} personne{spectateursLive > 1 ? "s" : ""} suivent le LIVE
+</div>
+    <div
+      style={{
+        position: "fixed",
+        right: "20px",
+        bottom: "20px",
+        zIndex: 99999,
+        background: "red",
+        color: "white",
+        padding: "15px",
+        borderRadius: "10px",
+        fontWeight: "bold",
+      }}
+    >
+      🔊 TEST SON
+    </div>
 
-        <p>Connexion réservée à l'administrateur</p>
+    {matchAlerte && (
+      <div className="match-alert">
+        <div className="match-alert-box">
 
-        <form onSubmit={connexionAdmin}>
+          <div className="match-alert-title">
+            🔔 MATCH MOSELLE DARTS !
+          </div>
 
-          <input
-            type="email"
-            placeholder="Adresse e-mail"
-            value={adminEmail}
-            onChange={(e) => setAdminEmail(e.target.value)}
-            required
-          />
+          <div className="match-alert-target">
+            🎯 CIBLE {matchAlerte.cible_numero}
+          </div>
 
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
-            required
-          />
+          <div className="match-alert-players">
+            <strong>{matchAlerte.joueur}</strong>
+            <span>VS</span>
+            <strong>{matchAlerte.adversaire}</strong>
+          </div>
 
-          <button type="submit">
-            Se connecter
+          <div className="match-alert-legs">
+            🏆 PREMIER À {matchAlerte.manches_gagnantes} MANCHES
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMatchAlerte(null)}
+            className="match-alert-close"
+          >
+            OK, J'AI VU
           </button>
 
-        </form>
-
-        {message && (
-          <p>{message}</p>
-        )}
+        </div>
       </div>
     )}
 
+    {isAdminRoute && !isAdmin && (
+  <div className="admin-login">
+    <h2>🔐 Administration</h2>
+
+    <p>Connexion réservée à l'administrateur</p>
+
+    <form onSubmit={connexionAdmin}>
+      <input
+        type="email"
+        placeholder="Adresse e-mail"
+        value={adminEmail}
+        onChange={(e) => setAdminEmail(e.target.value)}
+        autoComplete="email"
+      />
+
+      <input
+        type="password"
+        placeholder="Mot de passe"
+        value={adminPassword}
+        onChange={(e) => setAdminPassword(e.target.value)}
+        autoComplete="current-password"
+      />
+
+      <button type="submit">
+        🔐 SE CONNECTER
+      </button>
+    </form>
+
+    {message && (
+      <p className="admin-message">
+        {message}
+      </p>
+    )}
+  </div>
+)}
+      
     <div className="app">
 
       {/* HEADER */}
