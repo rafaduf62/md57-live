@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 import "./App.css";
+console.log("APP CSS CHARGE");
 import md57Logo from "./assets/md57-logo-transparent.png"; 
 
 const CLUB_NAME = "Moselle Darts 57";
@@ -8,6 +9,7 @@ const CLUB_NAME = "Moselle Darts 57";
 function App() {
   console.log("MD57 APP CHARGEE");
   const [matches, setMatches] = useState([]);
+  const [menuOuvert, setMenuOuvert] = useState(false);
   const [spectateursLive, setSpectateursLive] = useState(0);
   const [matchAlerte, setMatchAlerte] = useState(null);
   const dernierMatchAlerte = useRef(null);
@@ -1515,6 +1517,7 @@ return (
     </div>
 
     {/* DROITE : TOURNOI ET VILLE */}
+    
     <div className="tournament-info">
 
       <strong>
@@ -1531,7 +1534,14 @@ return (
       </span>
 
     </div>
-
+<button
+  type="button"
+  className="menu-button"
+  onClick={() => setMenuOuvert(true)}
+  aria-label="Ouvrir le menu"
+>
+  ☰
+</button>
   </div>
 
 </header>

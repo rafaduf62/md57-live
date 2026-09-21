@@ -1,4 +1,4 @@
-* {
+*  {
   box-sizing: border-box;
 }
 
@@ -69,7 +69,7 @@ button {
   z-index: 20;
 }
 
-.header-content {
+ .header-content {
   max-width: 1500px;
   margin: 0 auto;
   padding: 18px 24px;
@@ -131,7 +131,25 @@ button {
   color: #b9c7d8;
   font-weight: 700;
 }
+.menu-button {
+  justify-self: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid #ffffff;
+  border-radius: 10px;
+  background: #071a33;
+  color: #ffffff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.menu-button:hover {
+  background: #d71920;
+}
 .tournament-info {
   display: flex;
   flex-direction: column;
@@ -2788,4 +2806,18 @@ button {
   .match-alert-players strong {
     font-size: .95rem;
   }
+}
+.menu-button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: fixed !important;
+  right: 20px !important;
+  top: 20px !important;
+  z-index: 999999 !important;
+  background: red !important;
+  color: white !important;
+  width: 60px !important;
+  height: 60px !important;
+  font-size: 35px !important;
 }
