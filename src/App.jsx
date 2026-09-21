@@ -1547,8 +1547,14 @@ return (
 </header>
 
 {menuOuvert && (
-  <div className="menu-overlay">
-    <div className="side-menu">
+  <div
+  className="menu-overlay"
+  onClick={() => setMenuOuvert(false)}
+>
+    <div
+  className="side-menu"
+  onClick={(e) => e.stopPropagation()}
+>
 
       <button
         type="button"
@@ -1565,7 +1571,12 @@ return (
 
       <nav className="side-menu-nav">
         <button type="button">🏠 Accueil</button>
-        <button type="button">🔴 Live</button>
+        <button
+  type="button"
+  onClick={() => setMenuOuvert(false)}
+>
+  🔴 Live
+</button>
         <button type="button">🏆 Tournois</button>
         <button type="button">🥇 Championnat</button>
         <button type="button">📊 Classements</button>
