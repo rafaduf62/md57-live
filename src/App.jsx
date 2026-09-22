@@ -9,6 +9,7 @@ const CLUB_NAME = "Moselle Darts 57";
 function App() {
   console.log("MD57 APP CHARGEE");
   const [matches, setMatches] = useState([]);
+  const [championshipTeams, setChampionshipTeams] = useState([]);
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [spectateursLive, setSpectateursLive] = useState(0);
   const [matchAlerte, setMatchAlerte] = useState(null);
@@ -267,7 +268,20 @@ useEffect(() => {
       setLieu(data.lieu || "");
     }
   };
+const loadChampionshipTeams = async () => {
+  const { data, error } = await supabase
+    .from("championship_teams")
+    .select("*")
+    .eq("actif", true)
+    .order("id");
 
+  if (error) {
+    console.error("Erreur chargement équipes championnat :", error);
+    return;
+  }
+
+  setChampionshipTeams(data || []);
+};
   // ==================================================
   // INITIALISATION
   // ==================================================
@@ -319,7 +333,7 @@ useEffect(() => {
   );
 };
     loadMatches();
-
+  loadChampionshipTeams();
     const interval = setInterval(() => {
       loadMatches();
     }, 2000);
@@ -1320,38 +1334,15 @@ if (activeTab === "championship") {
 
     <div className="championship-teams-admin">
 
-      <div className="championship-team-row">
-        <strong>🦁 Équipe 1</strong>
-        <span>Poule 1</span>
-        <span>🧢 Capitaine : non défini</span>
-      </div>
-
-      <div className="championship-team-row">
-        <strong>🦁 Équipe 2</strong>
-        <span>Poule 2</span>
-        <span>🧢 Capitaine : non défini</span>
-      </div>
-
-      <div className="championship-team-row">
-        <strong>🦁 Équipe 3</strong>
-        <span>Poule 3</span>
-        <span>🧢 Capitaine : non défini</span>
-      </div>
-
-      <div className="championship-team-row">
-        <strong>🦁 Équipe 4</strong>
-        <span>Poule 3</span>
-        <span>🧢 Capitaine : non défini</span>
-      </div>
-
-      <div className="championship-team-row">
-        <strong>🦁 Équipe 5</strong>
-        <span>Poule 4</span>
-        <span>🧢 Capitaine : non défini</span>
-      </div>
-
-    </div>
+   {championshipTeams.map((team) => (
+  <div className="championship-team-row" key={team.id}>
+    <strong>🦁 {team.nom}</strong>
+    <span>{team.poule || "Poule non définie"}</span>
+    <span>🧢 Capitaine : non défini</span>
   </div>
+))}
+  </div>
+</div>
 )}
     </>
   );
@@ -1647,9 +1638,12 @@ return (
 
       <nav className="side-menu-nav">
         <button type="button">🏠 Accueil</button>
-        <button
+       <button
   type="button"
-  onClick={() => setMenuOuvert(false)}
+  onClick={() => {
+    setMenuOuvert(false);
+    setActiveTab("live");
+  }}
 >
   🔴 Live
 </button>
