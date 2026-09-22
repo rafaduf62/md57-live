@@ -280,7 +280,8 @@ const loadChampionshipTeams = async () => {
     return;
   }
 
-  setChampionshipTeams(data || []);
+  console.log("ÉQUIPES CHAMPIONNAT SUPABASE :", data);
+setChampionshipTeams(data || []);
 };
   // ==================================================
   // INITIALISATION
