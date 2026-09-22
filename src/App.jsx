@@ -1280,6 +1280,82 @@ useEffect(() => {
         </>
       );
     }
+    // ------------------------------------------------
+// CHAMPIONNAT
+// ------------------------------------------------
+
+if (activeTab === "championship") {
+  return (
+    <>
+      <div className="section-title">
+        <h2>🥇 Championnat</h2>
+        <span>Championnat par équipes</span>
+      </div>
+
+  <div className="championship-card">
+  <div className="championship-card-title">
+    <h3>📅 Journées de championnat</h3>
+    <span>Championnat par équipes</span>
+  </div>
+
+ <div className="championship-rounds">
+  <button type="button">🏆 Journée 1</button>
+  <button type="button">🏆 Journée 2</button>
+  <button type="button">🏆 Journée 3</button>
+  <button type="button">🏆 Journée 4</button>
+  <button type="button">🏆 Journée 5</button>
+  <button type="button">🏆 Journée 6</button>
+  <button type="button">🏆 Journée 7</button>
+  <button type="button">🏆 Journée 8</button>
+  <button type="button">🏆 Journée 9</button>
+  <button type="button">🏆 Journée 10</button>
+</div>
+</div>
+{isAdmin && (
+  <div className="championship-admin-card">
+    <div className="championship-card-title">
+      <h3>⚙️ Gestion des équipes</h3>
+      <span>Administrateur principal</span>
+    </div>
+
+    <div className="championship-teams-admin">
+
+      <div className="championship-team-row">
+        <strong>🦁 Équipe 1</strong>
+        <span>Poule 1</span>
+        <span>🧢 Capitaine : non défini</span>
+      </div>
+
+      <div className="championship-team-row">
+        <strong>🦁 Équipe 2</strong>
+        <span>Poule 2</span>
+        <span>🧢 Capitaine : non défini</span>
+      </div>
+
+      <div className="championship-team-row">
+        <strong>🦁 Équipe 3</strong>
+        <span>Poule 3</span>
+        <span>🧢 Capitaine : non défini</span>
+      </div>
+
+      <div className="championship-team-row">
+        <strong>🦁 Équipe 4</strong>
+        <span>Poule 3</span>
+        <span>🧢 Capitaine : non défini</span>
+      </div>
+
+      <div className="championship-team-row">
+        <strong>🦁 Équipe 5</strong>
+        <span>Poule 4</span>
+        <span>🧢 Capitaine : non défini</span>
+      </div>
+
+    </div>
+  </div>
+)}
+    </>
+  );
+}
         // ------------------------------------------------
     // TOUS LES RÉSULTATS
     // ------------------------------------------------
@@ -1578,7 +1654,15 @@ return (
   🔴 Live
 </button>
         <button type="button">🏆 Tournois</button>
-        <button type="button">🥇 Championnat</button>
+        <button
+  type="button"
+  onClick={() => {
+    setMenuOuvert(false);
+    setActiveTab("championship");
+  }}
+>
+  🥇 Championnat
+</button>
         <button type="button">📊 Classements</button>
         <button type="button">👥 Membres</button>
         <button type="button">📅 Événements</button>
