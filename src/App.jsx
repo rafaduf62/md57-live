@@ -10,6 +10,88 @@ function App() {
   console.log("MD57 APP CHARGEE");
   const [matches, setMatches] = useState([]);
   const [championshipTeams, setChampionshipTeams] = useState([]);
+  const [equipeSelectionnee, setEquipeSelectionnee] = useState(null);
+  const [joueursEquipe, setJoueursEquipe] = useState([]);
+  const [nouveauJoueur, setNouveauJoueur] = useState("");
+  const [joueurEnModification, setJoueurEnModification] = useState(null);
+  const [capitaineSelectionne, setCapitaineSelectionne] = useState("");
+  const [capitaineEquipe, setCapitaineEquipe] = useState(null);
+  const [capitainesEquipes, setCapitainesEquipes] = useState([]);
+  useEffect(() => {
+  const loadCapitainesEquipes = async () => {
+    const { data, error } = await supabase
+      .from("championship_captains")
+      .select(`
+        team_id,
+        player_id,
+        championship_players (
+          nom
+        )
+      `);
+
+    if (error) {
+      console.error("Erreur chargement capitaines :", error);
+      return;
+    }
+
+    setCapitainesEquipes(data || []);
+  };
+
+  loadCapitainesEquipes();
+}, []);
+  const [nouvelleLicence, setNouvelleLicence] = useState("");
+  useEffect(() => {
+  if (!equipeSelectionnee?.id) {
+    setJoueursEquipe([]);
+    return;
+  }
+
+  const loadJoueursEquipe = async () => {
+    const { data, error } = await supabase
+      .from("championship_players")
+      .select("*")
+      .eq("team_id", equipeSelectionnee.id)
+      .eq("actif", true)
+      .order("nom");
+
+    if (error) {
+      console.error("Erreur chargement joueurs :", error);
+      return;
+    }
+
+       setJoueursEquipe(data || []);
+  };
+
+  const loadCapitaineEquipe = async () => {
+  const { data, error } = await supabase
+    .from("championship_captains")
+    .select(`
+      player_id,
+      championship_players (
+        id,
+        nom
+      )
+    `)
+    .eq("team_id", equipeSelectionnee.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erreur chargement capitaine :", error);
+    return;
+  }
+
+  setCapitaineEquipe(data || null);
+
+  if (data?.player_id) {
+    setCapitaineSelectionne(String(data.player_id));
+  } else {
+    setCapitaineSelectionne("");
+  }
+};
+
+  loadJoueursEquipe();
+  loadCapitaineEquipe();
+}, [equipeSelectionnee]);
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [spectateursLive, setSpectateursLive] = useState(0);
   const [matchAlerte, setMatchAlerte] = useState(null);
@@ -48,6 +130,7 @@ const alertesSonoresActivees = useRef(false);
 
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCaptain, setIsCaptain] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
   const [adminEmail, setAdminEmail] = useState("");
@@ -64,39 +147,56 @@ const alertesSonoresActivees = useRef(false);
     let actif = true;
 
     const verifierAdmin = async () => {
-      const {
-        data: { session: sessionActuelle },
-      } = await supabase.auth.getSession();
+  const {
+    data: { session: sessionActuelle },
+  } = await supabase.auth.getSession();
 
-      if (!actif) return;
+  if (!actif) return;
 
-      setSession(sessionActuelle);
+  setSession(sessionActuelle);
 
-      if (!sessionActuelle?.user?.id) {
-        setIsAdmin(false);
-        setAuthLoading(false);
-        return;
-      }
+  if (!sessionActuelle?.user?.id) {
+  setIsAdmin(false);
+  setIsCaptain(false);
+  setAuthLoading(false);
+  return;
+}
 
-      const { data, error } = await supabase
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", sessionActuelle.user.id)
-        .maybeSingle();
+  const userId = sessionActuelle.user.id;
 
-      if (error) {
-        console.error(
-          "Erreur vérification administrateur :",
-          error
-        );
+  const { data: adminData, error: adminError } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-        setIsAdmin(false);
-      } else {
-        setIsAdmin(isAdminRoute && !!data);
-      }
+  if (adminError) {
+    console.error(
+      "Erreur vérification administrateur :",
+      adminError
+    );
+  }
 
-      setAuthLoading(false);
-    };
+  const { data: captainData, error: captainError } = await supabase
+    .from("championship_captains")
+    .select("id, team_id, player_id")
+    .eq("user_id", userId)
+    .eq("actif", true)
+    .maybeSingle();
+
+  if (captainError) {
+    console.error(
+      "Erreur vérification capitaine :",
+      captainError
+    );
+  }
+
+  setIsAdmin(isAdminRoute && !!adminData);
+  setIsCaptain(!!captainData);
+
+  setAuthLoading(false);
+};
+
 
     verifierAdmin();
 
@@ -712,9 +812,9 @@ setChampionshipTeams(data || []);
     player,
     amount
   ) => {
-      if (!isAdmin || !isAdminRoute) {
-    return;
-  }
+     if ((!isAdmin && !isCaptain) || (!isAdminRoute && !isCaptain)) {
+  return;
+}
     if (match.statut !== "En cours") {
       return;
     }
@@ -938,7 +1038,7 @@ setChampionshipTeams(data || []);
 
           <div className="score-buttons">
 
-            {isAdmin && (
+            {(isAdmin || isCaptain) && (
               <button
                 className="score-minus"
                 onClick={() =>
@@ -954,7 +1054,7 @@ setChampionshipTeams(data || []);
               </button>
             )}
 
-            {isAdmin && (
+            {(isAdmin || isCaptain) && (
               <button
                 className="score-plus"
                 onClick={() =>
@@ -1002,7 +1102,7 @@ setChampionshipTeams(data || []);
 
           <div className="score-buttons">
 
-            {isAdmin && (
+           {(isAdmin || isCaptain) && (
               <button
                 className="score-minus"
                 onClick={() =>
@@ -1018,7 +1118,7 @@ setChampionshipTeams(data || []);
               </button>
             )}
 
-            {isAdmin && (
+            {(isAdmin || isCaptain) && (
               <button
                 className="score-plus"
                 onClick={() =>
@@ -1326,7 +1426,7 @@ if (activeTab === "championship") {
   <button type="button">🏆 Journée 10</button>
 </div>
 </div>
-{isAdmin && (
+{(isAdmin || isCaptain) && (
   <div className="championship-admin-card">
     <div className="championship-card-title">
       <h3>⚙️ Gestion des équipes</h3>
@@ -1335,15 +1435,265 @@ if (activeTab === "championship") {
 
     <div className="championship-teams-admin">
 
-   {championshipTeams.map((team) => (
+   {championshipTeams
+  .filter(
+    (team) =>
+      isAdmin ||
+      capitainesEquipes.some(
+        (capitaine) =>
+          capitaine.team_id === team.id &&
+          capitaine.player_id
+      )
+  )
+  .map((team) => (
   <div className="championship-team-row" key={team.id}>
     <strong>🦁 {team.nom}</strong>
     <span>{team.poule || "Poule non définie"}</span>
-    <span>🧢 Capitaine : non défini</span>
+    <span>
+  🧢 Capitaine :{" "}
+  {capitainesEquipes.find(
+    (capitaine) => capitaine.team_id === team.id
+  )?.championship_players?.nom || "non défini"}
+</span>
+   <button
+  type="button"
+  onClick={() => setEquipeSelectionnee(team)}
+>
+  ⚙️ Gérer l'équipe
+</button>
   </div>
 ))}
   </div>
 </div>
+)}
+{equipeSelectionnee && (
+  <div className="championship-admin-card">
+    <div className="championship-card-title">
+      <h3>🦁 {equipeSelectionnee.nom}</h3>
+      <span>Gestion de l'équipe</span>
+    </div>
+
+    <p>
+      📍 {equipeSelectionnee.poule || "Poule non définie"}
+    </p>
+      <div className="championship-player-form">
+  <input
+    type="text"
+
+    placeholder="Nom du joueur"
+    value={nouveauJoueur}
+    onChange={(e) => setNouveauJoueur(e.target.value)}
+  />
+
+  <button
+  type="button"
+  onClick={async () => {
+    if (!nouveauJoueur.trim()) return;
+    if (joueursEquipe.length >= 20) {
+  window.alert("⚠️ Cette équipe compte déjà 20 joueurs.");
+  return;
+}
+
+    const { data, error } = await supabase
+      .from("championship_players")
+      .insert({
+        team_id: equipeSelectionnee.id,
+        nom: nouveauJoueur.trim(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erreur ajout joueur :", error);
+      return;
+    }
+
+    setJoueursEquipe((anciens) => [...anciens, data]);
+    setNouveauJoueur("");
+  }}
+>
+  ➕ Ajouter le joueur
+</button>
+</div>
+
+{joueursEquipe.length > 0 && (
+  <div className="championship-players-list">
+    <h4>
+  👥 Joueurs de l'équipe ({joueursEquipe.length} / 20)
+</h4>
+
+    {joueursEquipe.map((joueur) => (
+  <div
+    className="championship-player-row"
+    key={joueur.id}
+  >
+    <div>
+      <span>🎯 {joueur.nom}</span>
+      <span>
+        {joueur.licence || "Licence non renseignée"}
+      </span>
+    </div>
+
+    <button
+  type="button"
+  onClick={() => {
+    setJoueurEnModification(joueur);
+    setNouvelleLicence(joueur.licence || "");
+  }}
+>
+  ✏️ Modifier
+  <button
+  type="button"
+  onClick={async () => {
+    const confirmer = window.confirm(
+      `Supprimer ${joueur.nom} de l'équipe ?`
+    );
+
+    if (!confirmer) return;
+
+    const { error } = await supabase
+      .from("championship_players")
+      .delete()
+      .eq("id", joueur.id);
+
+    if (error) {
+      console.error("Erreur suppression joueur :", error);
+      return;
+    }
+
+    setJoueursEquipe((anciens) =>
+      anciens.filter((ancien) => ancien.id !== joueur.id)
+    );
+  }}
+>
+  🗑️ Supprimer
+</button>
+</button>
+
+    {joueurEnModification?.id === joueur.id && (
+      <div className="championship-player-edit">
+        <input
+          type="text"
+          value={joueurEnModification.nom}
+          onChange={(e) =>
+            setJoueurEnModification({
+              ...joueurEnModification,
+              nom: e.target.value,
+            })
+          }
+        />
+        <input
+  type="text"
+  placeholder="Licence"
+  value={nouvelleLicence}
+  onChange={(e) => setNouvelleLicence(e.target.value)}
+/>
+ 
+        <button
+  type="button"
+  onClick={async () => {
+    if (!joueurEnModification?.nom.trim()) return;
+
+    const { data, error } = await supabase
+      .from("championship_players")
+      .update({
+  nom: joueurEnModification.nom.trim(),
+  licence: nouvelleLicence.trim() || null,
+})
+      .eq("id", joueurEnModification.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erreur modification joueur :", error);
+      return;
+    }
+
+    setJoueursEquipe((anciens) =>
+      anciens.map((joueur) =>
+        joueur.id === data.id ? data : joueur
+      )
+    );
+
+    setJoueurEnModification(null);
+  }}
+>
+  💾 Enregistrer
+</button>
+
+        <button
+          type="button"
+          onClick={() => setJoueurEnModification(null)}
+        >
+          ❌ Annuler
+        </button>
+      </div>
+    )}
+  </div>
+))}
+  </div>
+)}
+
+<p>
+  📍 {equipeSelectionnee.poule || "Poule non définie"}
+</p>
+<p>
+  👑 Capitaine :{" "}
+  {capitaineEquipe?.player_id
+    ? joueursEquipe.find(
+        (joueur) => joueur.id === capitaineEquipe.player_id
+      )?.nom || "Non défini"
+    : "Non défini"}
+</p>
+<div c lassName="championship-captain-form">
+  <label>👑 Choisir le capitaine</label>
+
+ <select
+  value={capitaineSelectionne}
+  onChange={(e) => setCapitaineSelectionne(e.target.value)}
+>
+    <option value="">Sélectionner un joueur</option>
+
+    {joueursEquipe.map((joueur) => (
+      <option key={joueur.id} value={joueur.id}>
+        {joueur.nom}
+      </option>
+    ))}
+  </select>
+  <button
+  type="button"
+  onClick={async () => {
+    if (!capitaineSelectionne) {
+      window.alert("⚠️ Sélectionne un capitaine.");
+      return;
+    }
+
+   const { error } = await supabase
+  .from("championship_captains")
+  .update({
+    player_id: Number(capitaineSelectionne),
+  })
+  .eq("team_id", equipeSelectionnee.id);
+
+    if (error) {
+      console.error("Erreur enregistrement capitaine :", error);
+      window.alert(`❌ Erreur : ${error.message}`);
+      return;
+    }
+
+    window.alert("✅ Capitaine enregistré.");
+  }}
+>
+  💾 Enregistrer le capitaine
+</button>
+</div>
+<button
+      type="button"
+      onClick={() => setEquipeSelectionnee(null)}
+    >
+      ❌ Fermer
+    </button>
+  </div>
 )}
     </>
   );
@@ -1648,7 +1998,15 @@ return (
 >
   🔴 Live
 </button>
-        <button type="button">🏆 Tournois</button>
+        <button
+  type="button"
+  onClick={() => {
+    setMenuOuvert(false);
+    setActiveTab("tournaments");
+  }}
+>
+  🏆 Tournois
+</button>
         <button
   type="button"
   onClick={() => {
@@ -1739,7 +2097,9 @@ return (
 
         {/* ADMINISTRATION */}
 
-{isAdminRoute && isAdmin && (
+{activeTab === "tournaments" &&
+  isAdminRoute &&
+  (isAdmin || isCaptain) && (
   <section className="admin-section">
 
           <div className="admin-title">
@@ -2005,7 +2365,7 @@ return (
               <div className="form-actions">
 
                 <button
-                hidden={!isAdmin}
+                hidden={!isAdmin && !isCaptain}
                   type="submit"
                   className="primary-button"
                   disabled={loading}
@@ -2041,7 +2401,7 @@ return (
     GESTION DES MATCHS
 ================================================== */}
 
-{isAdminRoute && isAdmin && (
+{isAdminRoute && (isAdmin || isCaptain) && (
   <section className="admin-section">
 
           <div className="admin-title">
